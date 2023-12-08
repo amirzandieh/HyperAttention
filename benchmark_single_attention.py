@@ -36,18 +36,18 @@ def run_flash_attn(batch_size, head_size, seq_len, dim, causal, mode, impl="trit
     else:
         fn = lambda: flash_attn_func(q, k, v, None, causal, None)[0]
     if mode == 'fwd':
-        return triton.testing.do_bench(fn, warmup=warmup, rep=rep, percentiles=[0.2, 0.5, 0.8])
+        return triton.testing.do_bench(fn, warmup=warmup, rep=rep, quantiles=[0.2, 0.5, 0.8])
     elif mode == 'bwd':
         o = fn()
         do = torch.randn_like(o)
         fn = lambda: o.backward(do, retain_graph=True)
-        return triton.testing.do_bench(fn, warmup=warmup, rep=rep, percentiles=[0.2, 0.5, 0.8])
+        return triton.testing.do_bench(fn, warmup=warmup, rep=rep, quantiles=[0.2, 0.5, 0.8])
     else:  # mode == 'fwd+bwd'
-        q20_fwd, median_fwd, q80_fwd = triton.testing.do_bench(fn, warmup=warmup, rep=rep, percentiles=[0.2, 0.5, 0.8])
+        q20_fwd, median_fwd, q80_fwd = triton.testing.do_bench(fn, warmup=warmup, rep=rep, quantiles=[0.2, 0.5, 0.8])
         o = fn()
         do = torch.randn_like(o)
         fn = lambda: o.backward(do, retain_graph=True)
-        q20_bwd, median_bwd, q80_bwd = triton.testing.do_bench(fn, warmup=warmup, rep=rep, percentiles=[0.2, 0.5, 0.8])
+        q20_bwd, median_bwd, q80_bwd = triton.testing.do_bench(fn, warmup=warmup, rep=rep, quantiles=[0.2, 0.5, 0.8])
         return q20_fwd + q20_bwd, median_fwd + median_bwd, q80_fwd + q80_bwd
 
 
@@ -65,18 +65,18 @@ def run_hyper_attn(batch_size, head_size, seq_len, dim, causal, mode, warmup=20,
     fn = lambda: attn(q, k, v, causal=causal)
 
     if mode == 'fwd':
-        return triton.testing.do_bench(fn, warmup=warmup, rep=rep, percentiles=[0.2, 0.5, 0.8])
+        return triton.testing.do_bench(fn, warmup=warmup, rep=rep, quantiles=[0.2, 0.5, 0.8])
     elif mode == 'bwd':
         o = fn()
         do = torch.randn_like(o)
         fn = lambda: o.backward(do, retain_graph=True)
-        return triton.testing.do_bench(fn, warmup=warmup, rep=rep, percentiles=[0.2, 0.5, 0.8])
+        return triton.testing.do_bench(fn, warmup=warmup, rep=rep, quantiles=[0.2, 0.5, 0.8])
     else:  # mode == 'fwd+bwd'
-        q20_fwd, median_fwd, q80_fwd = triton.testing.do_bench(fn, warmup=warmup, rep=rep, percentiles=[0.2, 0.5, 0.8])
+        q20_fwd, median_fwd, q80_fwd = triton.testing.do_bench(fn, warmup=warmup, rep=rep, quantiles=[0.2, 0.5, 0.8])
         o = fn()
         do = torch.randn_like(o)
         fn = lambda: o.backward(do, retain_graph=True)
-        q20_bwd, median_bwd, q80_bwd = triton.testing.do_bench(fn, warmup=warmup, rep=rep, percentiles=[0.2, 0.5, 0.8])
+        q20_bwd, median_bwd, q80_bwd = triton.testing.do_bench(fn, warmup=warmup, rep=rep, quantiles=[0.2, 0.5, 0.8])
         return q20_fwd + q20_bwd, median_fwd + median_bwd, q80_fwd + q80_bwd
 
 
