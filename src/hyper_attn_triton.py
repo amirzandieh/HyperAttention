@@ -921,7 +921,7 @@ class HyperAttnFunc(torch.autograd.Function):
             ctx.sample_size,
             softmax_scale=ctx.softmax_scale,
         )
-        return dq, dk, dv, None, None, None, None
+        return dq, dk, dv, None, None, None, None, None
 
 
 hyper_attn_func = HyperAttnFunc.apply

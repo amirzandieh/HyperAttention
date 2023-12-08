@@ -34,7 +34,12 @@ class HyperAttention(torch.nn.Module):
 
         else:  # with causal masking
             if n_key <= self.min_seq_len:
-                attn, lse = flash_attn_func(query, key, value, None, True, scale)
+                attn, lse = flash_attn_func(query.transpose(1, 2),
+                                            key.transpose(1, 2),
+                                            value.transpose(1, 2),
+                                            None, True, scale)
+                attn = attn.transpose(1, 2)
+
             else:
                 # If n_query is odd we pad inputs by zero rows
                 if n_query % 2:
@@ -104,4 +109,4 @@ class HyperAttention(torch.nn.Module):
 
         attn = attn.transpose(1, 2)
 
-        return attn, lse
+        return attn, lse.unsqueeze(-1)
