@@ -17,7 +17,7 @@ class HyperAttention(torch.nn.Module):
         self.min_seq_len = min_seq_len
         self.lsh = AngularLSHTriton(num_projs=self.lsh_num_projs, dim=(1, 1, input_dim))
 
-    def forward(self, query: torch.tensor, key: torch.tensor, value: torch.tensor, scale=None, is_causal=False,
+    def forward(self, query: torch.tensor, key: torch.tensor, value: torch.tensor, scale=None, causal=False,
                 return_lse=False):
         query = query.contiguous()
         key = key.contiguous()
@@ -29,12 +29,12 @@ class HyperAttention(torch.nn.Module):
         assert n_query == n_key
 
         # without causal masking
-        if is_causal is False:
+        if causal is False:
             attn, lse = self.forward_no_causal_mask(query, key, value, scale)
 
         else:  # with causal masking
             if n_key <= self.min_seq_len:
-                attn, lse = flash_attn_func(query, key, value, causal=True, softmax_scale=scale)
+                attn, lse = flash_attn_func(query, key, value, None, True, scale)
             else:
                 # If n_query is odd we pad inputs by zero rows
                 if n_query % 2:
@@ -85,7 +85,7 @@ class HyperAttention(torch.nn.Module):
         n_key = key.shape[2]
 
         if self.min_seq_len > n_query:
-            return flash_attn_func(query, key, value, causal=False, softmax_scale=scale)
+            return flash_attn_func(query, key, value, None, False, scale)
 
         # Hash keys and queries via SortLSH and obtain buckets
         _, query_sort_idx = torch.sort(self.lsh.hash_triton(query), dim=2, stable=True)  # batch_size x head_size x n
@@ -99,6 +99,7 @@ class HyperAttention(torch.nn.Module):
                                     key_sort_idx.transpose(1, 2),
                                     self.block_size,
                                     self.sample_size,
+                                    scale,
                                     )
 
         attn = attn.transpose(1, 2)

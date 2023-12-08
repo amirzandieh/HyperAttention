@@ -44,7 +44,7 @@ class FastCoreAttention(torch.nn.Module):
                 block_size=block_size,
                 sample_size=sample_size,
                 min_seq_len=min_seq_len,
-                cuda='cuda' in self.attn_method)
+                )
         else:
             raise NotImplementedError("Invalid attn_method option")
 
