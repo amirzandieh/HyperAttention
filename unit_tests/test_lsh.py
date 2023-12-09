@@ -5,7 +5,7 @@ import triton
 
 import sys;
 
-sys.path.append("/home/ec2-user/workspace/hyper_attention_triton")
+sys.path.append("/home/ec2-user/workspace/hyper_attention")
 from src.angular_lsh_triton import AngularLSHTriton
 
 cnt = 0

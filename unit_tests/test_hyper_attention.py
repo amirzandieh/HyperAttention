@@ -4,7 +4,7 @@ import torch
 import triton
 import math
 
-import sys; sys.path.append("/home/ec2-user/workspace/hyper_attention_triton")
+import sys; sys.path.append("/home/ec2-user/workspace/hyper_attention")
 from src.flash_attn_triton import flash_attn_func
 from src.hyper_attn_triton import hyper_attn_func
 from src.attn_utils import add_self_attentions, indexing
