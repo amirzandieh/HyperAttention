@@ -2,7 +2,6 @@ NUM_TOTAL_LAYERS = {
     'chatglm2-6b-32k': 28,
 }
 
-# testing branch protection
 def patch_attention_layers(model, model_name, patch_config, num_patch_layers, **kwargs):
     num_total_layers = NUM_TOTAL_LAYERS[model_name]
     num_patch_layers = num_total_layers if num_patch_layers < 0 else num_patch_layers
