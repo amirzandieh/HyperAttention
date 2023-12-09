@@ -87,7 +87,6 @@ class HyperAttention(torch.nn.Module):
     def forward_no_causal_mask(self, query, key, value, scale):
 
         batch_size, head_size, n_query, dim = query.shape
-        n_key = key.shape[2]
 
         if self.min_seq_len > n_query:
             return flash_attn_func(query, key, value, None, False, scale)
