@@ -33,17 +33,19 @@ class FastCoreAttention(torch.nn.Module):
         self.attention_dropout = torch.nn.Dropout(config.attention_dropout)
 
         self.attn_method = kwargs.get('attn_method')
-        if self.attn_method in ['hyper', 'hyper-cuda']:
+        if self.attn_method == 'hyper':
             lsh_num_projs = kwargs.get('lsh_num_projs')
             block_size = kwargs.get('block_size')
             sample_size = kwargs.get('sample_size')
             min_seq_len = kwargs.get('min_seq_len')
+            smooth_block = kwargs.get('smooth_block')
             self.attn = HyperAttention(
                 input_dim=128,
                 lsh_num_projs=lsh_num_projs,
                 block_size=block_size,
                 sample_size=sample_size,
                 min_seq_len=min_seq_len,
+                smooth_block=smooth_block,
                 )
         else:
             raise NotImplementedError("Invalid attn_method option")

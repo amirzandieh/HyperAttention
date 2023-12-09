@@ -31,6 +31,7 @@ def get_arguments():
     parser.add_argument("--sample_size", type=int, default=256)
     parser.add_argument("--lsh_num_projs", type=int, default=8)
     parser.add_argument("--min_seq_len", type=int, default=2048)
+    parser.add_argument("--smooth_block", action="store_true")
     # currently only supports **chatglm2-6b-32k**
     parser.add_argument("--model_name", type=str, default="chatglm2-6b-32k")
     return parser.parse_args()
