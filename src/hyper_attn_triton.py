@@ -770,7 +770,7 @@ def _hyper_attn_backward(
         V_BLOCK_HEADDIM=V_BLOCK_HEADDIM,
     )
 
-    BLOCK = 64
+    BLOCK = 128
     num_warps = 8
     grid = lambda META: (triton.cdiv(seqlen_k, BLOCK), batch * nheads)
     _bwd_permuted_block_diagonal_kernel[grid](

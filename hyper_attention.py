@@ -89,23 +89,25 @@ class HyperAttention(torch.nn.Module):
         batch_size, head_size, n_query, dim = query.shape
 
         if self.min_seq_len > n_query:
-            return flash_attn_func(query, key, value, None, False, scale)
+            attn, lse = flash_attn_func(query.transpose(1, 2),
+                                        key.transpose(1, 2),
+                                        value.transpose(1, 2),
+                                        None, False, scale)
+        else:
+            # Hash keys and queries via SortLSH and obtain buckets
+            _, query_sort_idx = torch.sort(self.lsh.hash_triton(query), dim=2, stable=True)  # batch_size x head_size x n
+            _, key_sort_idx = torch.sort(self.lsh.hash_triton(key), dim=2, stable=True)
 
-        # Hash keys and queries via SortLSH and obtain buckets
-        _, query_sort_idx = torch.sort(self.lsh.hash_triton(query), dim=2, stable=True)  # batch_size x head_size x n
-        _, key_sort_idx = torch.sort(self.lsh.hash_triton(key), dim=2, stable=True)
-
-        # Now run hyper attention function on q,k,v and the permutations
-        attn, lse = hyper_attn_func(query.transpose(1, 2),
-                                    key.transpose(1, 2),
-                                    value.transpose(1, 2),
-                                    query_sort_idx.transpose(1, 2),
-                                    key_sort_idx.transpose(1, 2),
-                                    self.block_size,
-                                    self.sample_size,
-                                    scale,
-                                    )
-
+            # Now run hyper attention function on q,k,v and the permutations
+            attn, lse = hyper_attn_func(query.transpose(1, 2),
+                                        key.transpose(1, 2),
+                                        value.transpose(1, 2),
+                                        query_sort_idx.transpose(1, 2),
+                                        key_sort_idx.transpose(1, 2),
+                                        self.block_size,
+                                        self.sample_size,
+                                        scale,
+                                        )
         attn = attn.transpose(1, 2)
 
         return attn, lse.unsqueeze(-1)

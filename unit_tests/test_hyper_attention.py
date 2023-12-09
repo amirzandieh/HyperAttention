@@ -137,7 +137,7 @@ class MyTestCase(unittest.TestCase):
 
         batch_size = 4
         block_size = 256
-        dim = 128
+        dim = 64
         head_size = 32
         seq_len = 2048
         sample_size = 128

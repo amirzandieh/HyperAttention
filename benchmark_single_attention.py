@@ -88,7 +88,7 @@ def main():
 
     attn_method = args.attn_method  # ['flash', 'hyper']
     mode = args.mode  # ['fwd', 'bwd', 'fwd+bwd']
-    batch_size, head_size, dim = 1, 16, 64
+    batch_size, head_size, dim = 1, 24, 64
     print(f"mode: {mode}, attn_method: {attn_method}, batch_size: {batch_size}, head_size: {head_size}, dim: {dim}")
 
     causal = not args.no_causal
