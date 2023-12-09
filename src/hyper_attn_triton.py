@@ -322,7 +322,7 @@ def _bwd_blocked_kernel_one_col(
     for start_m in range(begin_m, end_m, BLOCK_M):
         start_m = tl.multiple_of(start_m, BLOCK_M)
         if smooth_block:
-            q_idx_ptrs = (start_m + block_offs + offs_m) * stride_q_idxm
+            q_idx_ptrs = ((start_m + block_offs + offs_m) * stride_q_idxm) % seqlen_q
         else:
             q_idx_ptrs = (start_m + offs_m) * stride_q_idxm
         q_idx = tl.load(Q_idx + q_idx_ptrs).to(tl.int32)
