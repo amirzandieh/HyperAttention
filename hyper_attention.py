@@ -19,6 +19,16 @@ class HyperAttention(torch.nn.Module):
 
     def forward(self, query: torch.tensor, key: torch.tensor, value: torch.tensor, scale=None, causal=False,
                 return_lse=False):
+        """
+        Forward function for HyperAttention. If no causal masking, simply invokes forward_no_causal_mask method.
+        If there is causal masking, it partitions the attention matrix and recurses on the partitions.
+        inputs:
+            - query, key, and valu: must have same sequence lengths but dimension of values can be different from
+            that of query or key
+        output:
+            - attn: (approximation of) the final attention output tensor
+            - lse: (approximation of) log sum exp of the qk matrix
+    """
         query = query.contiguous()
         key = key.contiguous()
         value = value.contiguous()
