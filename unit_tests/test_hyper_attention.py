@@ -36,7 +36,7 @@ class MyTestCase(unittest.TestCase):
         head_size = 32
         seq_len = 2048
         sample_size = 128
-        smooth_block = True
+        smooth_block = False
 
         query = torch.randn((batch_size, head_size, seq_len, dim), device='cuda', dtype=dtype)
         key = torch.randn((batch_size, head_size, seq_len, dim), device='cuda', dtype=dtype)
