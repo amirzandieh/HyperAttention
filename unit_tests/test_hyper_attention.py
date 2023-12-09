@@ -70,6 +70,7 @@ class MyTestCase(unittest.TestCase):
         flash_attn_block = indexing(attn_block, query_sort_idx_inv)+attn_sample
         lse_block = indexing(lse_block, query_sort_idx_inv)
         attn, lse = add_self_attentions(flash_attn_block, lse_block, attn_sample, lse_sample.unsqueeze(-1))
+        lse = lse.squeeze(-1)
         t1 = time.time()
         check_memory()
         print('the runtime of flash attention with permutation and indexing of queries:', t1-t0)
@@ -91,7 +92,7 @@ class MyTestCase(unittest.TestCase):
         # compute attention kernel which permutes queries in triton
         check_memory(0)
         t2 = time.time()
-        attn_triton, lse_triton = hyper_attn_func(
+        attn_hyper, lse_hyper = hyper_attn_func(
             query.transpose(1, 2),
             key.transpose(1, 2),
             value.transpose(1, 2),
@@ -100,15 +101,15 @@ class MyTestCase(unittest.TestCase):
             block_size,
             sample_size,
         )
-        attn_triton = attn_triton.transpose(1, 2)
+        attn_hyper = attn_hyper.transpose(1, 2)
         t3 = time.time()
         check_memory()
 
         print('the runtime of hyper attention:', t3 - t2)
 
-        print('diff lse hyper_attention and flash with indexing and permutation: ', (lse - lse_triton).norm(), lse.norm())
+        print('diff lse hyper_attention and flash with indexing and permutation: ', (lse - lse_hyper).norm(), lse.norm())
 
-        print('error hyper attention lse: ', (lse_triton - lse_torch).norm(), lse_torch.norm())
+        print('error hyper attention lse: ', (lse_hyper - lse_torch).norm(), lse_torch.norm())
 
         # check if dimension of V can be different from that of Q and K
         value_small = value[:, :, :, :dim//2].clone()
@@ -124,7 +125,7 @@ class MyTestCase(unittest.TestCase):
         attn_triton_unequal_dim = attn_triton_unequal_dim.transpose(1, 2)
 
         print('testing unequal dimension for V compared to Q, K')
-        print((attn_triton[:, :, :, :dim//2] - attn_triton_unequal_dim).norm())
+        print((attn_hyper[:, :, :, :dim//2] - attn_triton_unequal_dim).norm())
 
     def test_gradient(self):
         dtype = torch.bfloat16
