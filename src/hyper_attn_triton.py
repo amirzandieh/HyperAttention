@@ -102,7 +102,7 @@ def _fwd_hyper_kernel(
     # block diagonal part
     # loop over k, v and update accumulator
     block_id = start_m // block_size
-    block_offs = (start_m % block_size) * BLOCK_N - (block_size-1) * BLOCK_N//2
+    block_offs = seqlen_k + (start_m % block_size) * BLOCK_N - (block_size-1) * BLOCK_N//2
     end_n = tl.minimum((block_id + 1) * BLOCK_N * block_size, seqlen_k)
     for start_n in range(block_id * BLOCK_N * block_size, end_n, BLOCK_N):
         start_n = tl.multiple_of(start_n, BLOCK_N)
@@ -291,7 +291,7 @@ def _bwd_blocked_kernel_one_col(
 ):
     # We need to make sure begin_m is a multiple of BLOCK_M (not BLOCK_N)
     block_id = start_n // block_size
-    block_offs = (start_n % block_size) * BLOCK_M - (block_size - 1) * BLOCK_M // 2
+    block_offs = seqlen_q + (start_n % block_size) * BLOCK_M - (block_size - 1) * BLOCK_M // 2
     begin_m = block_id * BLOCK_M * block_size
     # initialize row / col offsets
     offs_n = start_n * BLOCK_N + tl.arange(0, BLOCK_N)
