@@ -8,7 +8,7 @@ from src.angular_lsh_triton import AngularLSHTriton
 
 class HyperAttention(torch.nn.Module):
 
-    def __init__(self, input_dim=64, lsh_num_projs=7, block_size=256, sample_size=256, min_seq_len=2048, **kwargs):
+    def __init__(self, input_dim=64, lsh_num_projs=8, block_size=256, sample_size=256, min_seq_len=2048, **kwargs):
         super().__init__()
         self.input_dim = input_dim
         self.lsh_num_projs = lsh_num_projs

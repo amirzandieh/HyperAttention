@@ -29,8 +29,8 @@ def get_arguments():
     # params of HyperAttention
     parser.add_argument("--block_size", type=int, default=256)
     parser.add_argument("--sample_size", type=int, default=256)
-    parser.add_argument("--lsh_num_projs", type=int, default=7)
-    parser.add_argument("--min_seq_len", type=int, default=4096)
+    parser.add_argument("--lsh_num_projs", type=int, default=8)
+    parser.add_argument("--min_seq_len", type=int, default=2048)
     # currently only supports **chatglm2-6b-32k**
     parser.add_argument("--model_name", type=str, default="chatglm2-6b-32k")
     return parser.parse_args()

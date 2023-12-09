@@ -59,8 +59,7 @@ def run_hyper_attn(batch_size, head_size, seq_len, dim, causal, mode, warmup=20,
     attn = HyperAttention(
         input_dim=dim,
         block_size=block_size,
-        sample_size=sample_size,
-        min_seq_len=4096).to(device='cuda', dtype=q.dtype)
+        sample_size=sample_size,).to(device='cuda', dtype=q.dtype)
 
     fn = lambda: attn(q, k, v, causal=causal)
 
@@ -89,7 +88,7 @@ def main():
 
     attn_method = args.attn_method  # ['flash', 'hyper']
     mode = args.mode  # ['fwd', 'bwd', 'fwd+bwd']
-    batch_size, head_size, dim = 1, 32, 64
+    batch_size, head_size, dim = 1, 16, 64
     print(f"mode: {mode}, attn_method: {attn_method}, batch_size: {batch_size}, head_size: {head_size}, dim: {dim}")
 
     causal = not args.no_causal

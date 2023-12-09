@@ -17,7 +17,7 @@ from hyper_attention import HyperAttention
 
 attn = HyperAttention(
     input_dim=64, 
-    lsh_num_projs=7,
+    lsh_num_projs=8,
     block_size=256,
     sample_size=256,
     min_seq_len=2048)
@@ -27,7 +27,7 @@ attn_output = attn(query, key, value, causal=True)
 
 The module has the following parameters:
 - ```input_dim```: the dimension of input query and key. (Required)
-- ```lsh_num_projs```: the number of random projection vectors used in the locality sensitive hashing scheme. The default is 7.
+- ```lsh_num_projs```: the number of random projection vectors used in the locality sensitive hashing scheme. The default is 8.
 - ```block_size```: the size of blocks for the block-diagonal approximation. The default is 256.
 - ```sample_size```: the number of sampled columns in the attention matrix $A$. The default is 256.
-- ```min_seq_len```: minimum sequence length that HyperAttention applies. When the sequence length is smaller than this value we compute exactly using the FlashAttention because of overheads of HyperAttention may dominate the runtim. The default value is ```2048```.
+- ```min_seq_len```: minimum sequence length that HyperAttention applies. When the sequence length is smaller than this value we compute exactly using the FlashAttention because overheads of HyperAttention may dominate the runtime for short sequences. The default value is ```2048```.
