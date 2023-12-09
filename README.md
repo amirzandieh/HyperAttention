@@ -6,7 +6,7 @@ Triton Implementation of HyperAttention Algorithm
 
 The code requires ``pytorch`` and [``triton``](https://github.com/openai/triton).
 pytorch version 2.0.1 tested, but any version >= 2.0.0 might work.
-Also makes use of [FlashAttention](https://github.com/Dao-AILab/flash-attention/tree/main) in [triton](https://github.com/openai/triton) implementation. Flash attention kernel adapted to work with triton version **2.1.0.**
+Also makes use of [triton](https://github.com/openai/triton) implementation of [FlashAttention](https://github.com/Dao-AILab/flash-attention/tree/main). Flash attention kernel adapted to be compilable with triton version **2.1.0.**
 
 # How to use
 
