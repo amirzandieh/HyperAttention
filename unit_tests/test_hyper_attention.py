@@ -25,7 +25,9 @@ def check_memory(new_cnt=-1):
 
 
 class MyTestCase(unittest.TestCase):
-    def test_block_indexing(self):
+    def test_forward_attention(self):
+        print("1. this is forward test")
+
         dtype = torch.bfloat16
 
         batch_size = 4
@@ -128,6 +130,9 @@ class MyTestCase(unittest.TestCase):
         print((attn_hyper[:, :, :, :dim//2] - attn_triton_unequal_dim).norm())
 
     def test_gradient(self):
+        print()
+        print("2. this is gradients test")
+
         dtype = torch.bfloat16
 
         batch_size = 4
@@ -238,13 +243,13 @@ class MyTestCase(unittest.TestCase):
         print('difference between gradients of values, flash vs hyper:')
         print((v_grad - v_grad_hyper).norm())
 
-        print('difference of queries, torch vs hyper:')
+        print('difference gradients of queries, torch vs hyper:')
         print((q_grad_torch - q_grad_hyper).norm(), q_grad_torch.norm(), q_grad_hyper.norm())
 
-        print('difference of keys, torch vs hyper:')
+        print('difference gradients of keys, torch vs hyper:')
         print((k_grad_torch - k_grad_hyper).norm(), k_grad_torch.norm(), k_grad_hyper.norm())
 
-        print('difference of values, torch vs hyper:')
+        print('difference gradients of values, torch vs hyper:')
         print((v_grad_torch - v_grad_hyper).norm(), v_grad_torch.norm(), v_grad_hyper.norm())
 
 
