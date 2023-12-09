@@ -60,6 +60,7 @@ def _fwd_hyper_kernel(
         seqlen_q,
         headdim,
         v_headdim,
+        smooth_block,
         CACHE_KEY_SEQLEN_Q,
         CACHE_KEY_SEQLEN_K,
         BLOCK_HEADDIM: tl.constexpr,
@@ -84,7 +85,7 @@ def _fwd_hyper_kernel(
     )
     q_idx = tl.load(q_idx_ptrs).to(tl.int32)
 
-    k_idx_ptrs = (k_sort_idx + off_b * stride_k_sort_idxb + off_h * stride_k_sort_idxh + offs_n * stride_k_sort_idxn)
+    k_sort_idx += off_b * stride_k_sort_idxb + off_h * stride_k_sort_idxh
 
     # initialize pointer to m and l
     lse_i = tl.zeros([BLOCK_M], dtype=tl.float32) - float("inf")
@@ -101,10 +102,16 @@ def _fwd_hyper_kernel(
     # block diagonal part
     # loop over k, v and update accumulator
     block_id = start_m // block_size
+    block_offs = seqlen_k + (start_m % block_size) * BLOCK_N - (block_size-1) * BLOCK_N//2
     end_n = tl.minimum((block_id + 1) * BLOCK_N * block_size, seqlen_k)
     for start_n in range(block_id * BLOCK_N * block_size, end_n, BLOCK_N):
         start_n = tl.multiple_of(start_n, BLOCK_N)
-        k_idx = tl.load(k_idx_ptrs + start_n * stride_k_sort_idxn).to(tl.int32)
+        if smooth_block:
+            k_idx_ptrs = ((start_n + block_offs + offs_n) * stride_k_sort_idxn) % seqlen_k
+        else:
+            k_idx_ptrs = (start_n + offs_n) * stride_k_sort_idxn
+
+        k_idx = tl.load(k_sort_idx + k_idx_ptrs).to(tl.int32)
         k_ptrs = K + off_b * stride_kb + off_h * stride_kh + (k_idx[:, None] * stride_kn + offs_d[None, :])
         # -- compute qk ----
         if EVEN_HEADDIM:
@@ -274,6 +281,7 @@ def _bwd_blocked_kernel_one_col(
         block_size,
         headdim,
         v_headdim,
+        smooth_block,
         BLOCK_HEADDIM: tl.constexpr,
         V_BLOCK_HEADDIM: tl.constexpr,
         EVEN_HEADDIM: tl.constexpr,
@@ -283,6 +291,7 @@ def _bwd_blocked_kernel_one_col(
 ):
     # We need to make sure begin_m is a multiple of BLOCK_M (not BLOCK_N)
     block_id = start_n // block_size
+    block_offs = seqlen_q + (start_n % block_size) * BLOCK_M - (block_size - 1) * BLOCK_M // 2
     begin_m = block_id * BLOCK_M * block_size
     # initialize row / col offsets
     offs_n = start_n * BLOCK_N + tl.arange(0, BLOCK_N)
@@ -312,8 +321,11 @@ def _bwd_blocked_kernel_one_col(
     end_m = tl.minimum((block_id + 1) * BLOCK_M * block_size, seqlen_q)
     for start_m in range(begin_m, end_m, BLOCK_M):
         start_m = tl.multiple_of(start_m, BLOCK_M)
-        q_idx_ptrs = Q_idx + (start_m + offs_m) * stride_q_idxm
-        q_idx = tl.load(q_idx_ptrs).to(tl.int32)
+        if smooth_block:
+            q_idx_ptrs = ((start_m + block_offs + offs_m) * stride_q_idxm) % seqlen_q
+        else:
+            q_idx_ptrs = (start_m + offs_m) * stride_q_idxm
+        q_idx = tl.load(Q_idx + q_idx_ptrs).to(tl.int32)
         q_ptrs = Q + (q_idx[:, None] * stride_qm + offs_d[None, :])
         # load q, k, v, do on-chip
         if EVEN_HEADDIM:
@@ -432,6 +444,7 @@ def _bwd_permuted_block_diagonal_kernel(
         block_size,
         headdim,
         v_headdim,
+        smooth_block,
         CACHE_KEY_SEQLEN_Q,
         CACHE_KEY_SEQLEN_K,
         BLOCK_HEADDIM: tl.constexpr,
@@ -486,6 +499,7 @@ def _bwd_permuted_block_diagonal_kernel(
         block_size=block_size // BLOCK_N,
         headdim=headdim,
         v_headdim=v_headdim,
+        smooth_block=smooth_block,
         BLOCK_HEADDIM=BLOCK_HEADDIM,
         V_BLOCK_HEADDIM=V_BLOCK_HEADDIM,
         EVEN_HEADDIM=EVEN_HEADDIM,
@@ -654,7 +668,8 @@ def _bwd_sampled_col_kernel(
     return
 
 
-def _blocked_flash_attn_forward(q, k, v, q_sort_idx, k_sort_idx, block_size, sample_size, softmax_scale=None):
+def _blocked_flash_attn_forward(q, k, v, q_sort_idx, k_sort_idx, block_size, sample_size, softmax_scale=None,
+                                smooth_block=False):
     """
         Initializes the forward kernel and schedules thread blocks and runs them in parallel
     """
@@ -717,6 +732,7 @@ def _blocked_flash_attn_forward(q, k, v, q_sort_idx, k_sort_idx, block_size, sam
         seqlen_q=seqlen_q,
         headdim=d,
         v_headdim=v_headdim,
+        smooth_block=smooth_block,
         CACHE_KEY_SEQLEN_Q=seqlen_q // 32,
         CACHE_KEY_SEQLEN_K=seqlen_k // 32,
         BLOCK_HEADDIM=BLOCK_HEADDIM,
@@ -730,8 +746,8 @@ def _blocked_flash_attn_forward(q, k, v, q_sort_idx, k_sort_idx, block_size, sam
 
 
 def _hyper_attn_backward(
-    do, q, k, v, q_sort_idx, k_sort_idx, o, lse, dq, dk, dv, block_size, sample_size, softmax_scale=None
-):
+    do, q, k, v, q_sort_idx, k_sort_idx, o, lse, dq, dk, dv, block_size, sample_size, softmax_scale=None,
+        smooth_block=False):
     """
     Initializes the backward kernel and schedules thread blocks and runs them in parallel
     """
@@ -819,6 +835,7 @@ def _hyper_attn_backward(
         block_size=block_size,
         headdim=d,
         v_headdim=v_headdim,
+        smooth_block=smooth_block,
         CACHE_KEY_SEQLEN_Q=seqlen_q // 32,
         CACHE_KEY_SEQLEN_K=seqlen_k // 32,  # key for triton cache (limit number of compilations)
         BLOCK_HEADDIM=BLOCK_HEADDIM,
@@ -880,7 +897,8 @@ def _hyper_attn_backward(
 
 class HyperAttnFunc(torch.autograd.Function):
     @staticmethod
-    def forward(ctx, q, k, v, q_sort_idx, k_sort_idx, block_size, sample_size=0, softmax_scale=None):
+    def forward(ctx, q, k, v, q_sort_idx, k_sort_idx, block_size, sample_size=0, softmax_scale=None,
+                smooth_block=False):
         """
         q, k: queries and keys (batch_size, seqlen, nheads, headdim), seqlen must be integer power of two
         v: values (batch_size, seqlen, nheads, v_headdim)
@@ -888,16 +906,20 @@ class HyperAttnFunc(torch.autograd.Function):
         k_sort_idx: the permutation for keys and values (batch_size, seqlen, nheads)
         block_size: side length of block diagonal blocks
         sample_size: number of sampled columns, must be multiple of 128
+        softmax_scale: if none then scale will be 1/sqrt(headdim)
+        smooth_block: if true the block diagonals will be smoothened to resemble banded digonal patterns
         """
         # Make sure that the last dimension is contiguous
         q, k, v = [x if x.stride(-1) == 1 else x.contiguous() for x in [q, k, v]]
         assert sample_size % 128 == 0
         o, lse, ctx.softmax_scale = _blocked_flash_attn_forward(
-            q, k, v, q_sort_idx, k_sort_idx, block_size, sample_size, softmax_scale=softmax_scale
+            q, k, v, q_sort_idx, k_sort_idx, block_size, sample_size,
+            softmax_scale=softmax_scale, smooth_block=smooth_block,
         )
         ctx.save_for_backward(q, k, v, q_sort_idx, k_sort_idx, o, lse)
         ctx.block_size = block_size
         ctx.sample_size = sample_size
+        ctx.smooth_block = smooth_block
         return o, lse
 
     @staticmethod
@@ -921,8 +943,9 @@ class HyperAttnFunc(torch.autograd.Function):
             ctx.block_size,
             ctx.sample_size,
             softmax_scale=ctx.softmax_scale,
+            smooth_block=ctx.smooth_block,
         )
-        return dq, dk, dv, None, None, None, None, None
+        return dq, dk, dv, None, None, None, None, None, None
 
 
 hyper_attn_func = HyperAttnFunc.apply

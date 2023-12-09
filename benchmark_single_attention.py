@@ -14,6 +14,7 @@ except ImportError:
 def get_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("--no_causal", action="store_true")
+    parser.add_argument("--smooth_block", action="store_true")
     parser.add_argument("--mode", type=str, default="fwd+bwd", choices=['fwd', 'bwd', 'fwd+bwd'])
     parser.add_argument("--attn_method", type=str, default="flash",
                         choices=['flash', 'flash-cuda', 'hyper'])
@@ -51,7 +52,7 @@ def run_flash_attn(batch_size, head_size, seq_len, dim, causal, mode, impl="trit
         return q20_fwd + q20_bwd, median_fwd + median_bwd, q80_fwd + q80_bwd
 
 
-def run_hyper_attn(batch_size, head_size, seq_len, dim, causal, mode, warmup=20, rep=100):
+def run_hyper_attn(batch_size, head_size, seq_len, dim, causal, mode, smooth_block, warmup=20, rep=100):
     q, k, v = get_tensors(batch_size, head_size, seq_len, dim)
     block_size = 256
     sample_size = 256
@@ -59,7 +60,8 @@ def run_hyper_attn(batch_size, head_size, seq_len, dim, causal, mode, warmup=20,
     attn = HyperAttention(
         input_dim=dim,
         block_size=block_size,
-        sample_size=sample_size,).to(device='cuda', dtype=q.dtype)
+        sample_size=sample_size,
+        smooth_block=smooth_block,).to(device='cuda', dtype=q.dtype)
 
     fn = lambda: attn(q, k, v, causal=causal)
 
@@ -99,7 +101,8 @@ def main():
         elif attn_method == 'flash-cuda':
             ms = run_flash_attn(batch_size, head_size, seq_len, dim, causal, mode=args.mode, impl="cuda")
         elif attn_method == 'hyper':
-            ms = run_hyper_attn(batch_size, head_size, seq_len, dim, causal, mode=args.mode)
+            ms = run_hyper_attn(batch_size, head_size, seq_len, dim, causal, mode=args.mode,
+                                smooth_block=args.smooth_block)
         else:
             raise NotImplementedError
 

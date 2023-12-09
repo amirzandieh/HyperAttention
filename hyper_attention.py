@@ -8,13 +8,15 @@ from src.angular_lsh_triton import AngularLSHTriton
 
 class HyperAttention(torch.nn.Module):
 
-    def __init__(self, input_dim=64, lsh_num_projs=8, block_size=256, sample_size=256, min_seq_len=2048, **kwargs):
+    def __init__(self, input_dim=64, lsh_num_projs=8, block_size=256, sample_size=256, min_seq_len=2048,
+                 smooth_block=False, **kwargs):
         super().__init__()
         self.input_dim = input_dim
         self.lsh_num_projs = lsh_num_projs
         self.block_size = block_size
         self.sample_size = sample_size
         self.min_seq_len = min_seq_len
+        self.smooth_block = smooth_block
         self.lsh = AngularLSHTriton(num_projs=self.lsh_num_projs, dim=(1, 1, input_dim))
 
     def forward(self, query: torch.tensor, key: torch.tensor, value: torch.tensor, scale=None, causal=False,
@@ -117,6 +119,7 @@ class HyperAttention(torch.nn.Module):
                                         self.block_size,
                                         self.sample_size,
                                         scale,
+                                        self.smooth_block,
                                         )
         attn = attn.transpose(1, 2)
 
