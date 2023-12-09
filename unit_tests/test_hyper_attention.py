@@ -36,6 +36,7 @@ class MyTestCase(unittest.TestCase):
         head_size = 32
         seq_len = 2048
         sample_size = 128
+        smooth_block = True
 
         query = torch.randn((batch_size, head_size, seq_len, dim), device='cuda', dtype=dtype)
         key = torch.randn((batch_size, head_size, seq_len, dim), device='cuda', dtype=dtype)
@@ -102,6 +103,8 @@ class MyTestCase(unittest.TestCase):
             key_sort_idx.transpose(1, 2),
             block_size,
             sample_size,
+            1./math.sqrt(dim),
+            smooth_block,
         )
         attn_hyper = attn_hyper.transpose(1, 2)
         t3 = time.time()
