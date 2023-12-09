@@ -1,6 +1,6 @@
 import torch
 
-from src.add_self_attn import add_self_attentions
+from src.attn_utils import add_self_attentions
 from src.flash_attn_triton import flash_attn_func
 from src.hyper_attn_triton import hyper_attn_func
 from src.angular_lsh_triton import AngularLSHTriton

@@ -5,11 +5,10 @@ import triton
 
 import sys;
 
-# sys.path.append("/home/ec2-user/workspace/hyper_attention_triton")
+sys.path.append("/home/ec2-user/workspace/hyper_attention_triton")
 from src.angular_lsh_triton import AngularLSHTriton
 
 cnt = 0
-
 
 def check_memory():
     global cnt
@@ -21,7 +20,7 @@ def check_memory():
 
 
 class MyTestCase(unittest.TestCase):
-    def test_validation(self):
+    def test_1_validation(self):
         print("1. this is validation test")
         dtype = torch.float16
         block_size, dim, batch_size, head_size, seq_len = 256, 128, 4, 32, 2048
@@ -45,9 +44,9 @@ class MyTestCase(unittest.TestCase):
         check_memory()
         print('the runtime of triton lsh:', t3 - t2)
 
-        print((query_hash_buckets.float() - query_hash_buckets_triton.float()).norm())
+        print('difference between torch and triton hashes: ', (query_hash_buckets.float() - query_hash_buckets_triton.float()).norm())
 
-    def test_runtime(self):
+    def test_2_runtime(self):
         print()
         print("2. this is runtime test")
 
