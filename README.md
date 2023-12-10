@@ -40,8 +40,16 @@ In this section, we showcase the speedup achieved by HyperAttention in compariso
 
 ## Causal masking (decoder-style attention)
 
-The speedup factors for both the forward pass and forward+backward passes for the attention decoder with causal masking are plotted below. HyperAttention exhibits over a 22x speedup for the forward pass and an over 16x speedup for the combined forward+backward passes when the sequence length is 131k.
+The speedup factors for both the forward pass and forward+backward passes for the attention decoder with causal masking are plotted below. HyperAttention exhibits over a ```22x``` speedup for the forward pass and an over ```16x``` speedup for the combined forward+backward passes when the sequence length is ```131k```.
 
 <p align="center">
-    <img src="./speedup_plots/fig_hyper_attn_causal_masking.png" width="640">
+    <img src="./speedup_plots/fig_hyper_attn_causal_masking.png" width="512">
+</p>
+
+## No causal masking (encoder-style attention)
+
+The speedup factors for both the forward pass and forward+backward passes in the attention encoder, without causal masking, are shown below. HyperAttention reduces to a notably simpler and more efficient algorithm in the absence of causal masking, avoiding the need for recursive partitioning of the attention matrix.  Therefore, HyperAttention showcases remarkable speedups, surpassing ```270x``` acceleration for both the forward pass and the combined forward+backward passes when the sequence length is ```131k```.
+
+<p align="center">
+    <img src="./speedup_plots/fig_hyper_attn_no_causal_masking.png" width="512">
 </p>
