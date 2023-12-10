@@ -668,7 +668,7 @@ def _bwd_sampled_col_kernel(
     return
 
 
-def _blocked_flash_attn_forward(q, k, v, q_sort_idx, k_sort_idx, block_size, sample_size, softmax_scale=None,
+def _hyper_attn_forward(q, k, v, q_sort_idx, k_sort_idx, block_size, sample_size, softmax_scale=None,
                                 smooth_block=False):
     """
         Initializes the forward kernel and schedules thread blocks and runs them in parallel
@@ -912,7 +912,7 @@ class HyperAttnFunc(torch.autograd.Function):
         # Make sure that the last dimension is contiguous
         q, k, v = [x if x.stride(-1) == 1 else x.contiguous() for x in [q, k, v]]
         assert sample_size % 128 == 0
-        o, lse, ctx.softmax_scale = _blocked_flash_attn_forward(
+        o, lse, ctx.softmax_scale = _hyper_attn_forward(
             q, k, v, q_sort_idx, k_sort_idx, block_size, sample_size,
             softmax_scale=softmax_scale, smooth_block=smooth_block,
         )
