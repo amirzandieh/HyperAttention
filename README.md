@@ -36,7 +36,7 @@ The module has the following parameters:
 
 # Speedup on single attention layer
 
-In this section, we showcase the speedup achieved by HyperAttention in comparison to the Triton implementation of FlashAttention (v2) across a range of sequence lengths. The configuration includes 32 heads and a dimension of 64.
+In this section, we showcase the speedup achieved by HyperAttention in comparison to the Triton implementation of FlashAttention (v2) across a range of sequence lengths. The configuration involves 32 heads and a dimension of 64, and the results are obtained by running the methods on NVIDIA A10 Tensor Core GPUs.
 
 ## Causal masking (decoder-style attention)
 
