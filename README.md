@@ -32,4 +32,16 @@ The module has the following parameters:
 - ```block_size```: the size of blocks for the block-diagonal approximation. The default is 256.
 - ```sample_size```: the number of sampled columns in the attention matrix $A$. The default is 256.
 - ```min_seq_len```: minimum sequence length that HyperAttention applies. When the sequence length is smaller than this value we compute exactly using the FlashAttention because overheads of HyperAttention may dominate the runtime for short sequences. The default value is ```2048```.
-- ```smooth_block```: smoothen the block-diagonal approximation by letting the blocks overlap and resemble banded diagonal approximation. 
+- ```smooth_block```: smoothen the block-diagonal approximation by letting the blocks overlap and resemble smooth banded diagonal approximation. The default is False.
+
+# Speedup on single attention layer
+
+In this section, we showcase the speedup achieved by HyperAttention in comparison to the Triton implementation of FlashAttention (v2) across a range of sequence lengths. The configuration includes 32 heads and a dimension of 64.
+
+## Causal masking (decoder-style attention)
+
+The speedup factors for both the forward pass and forward+backward passes for the attention decoder with causal masking are plotted below. HyperAttention exhibits over a 22x speedup for the forward pass and an over 16x speedup for the combined forward+backward passes when the sequence length is 131k.
+
+<p align="center">
+    <img src="./speedup_plots/fig_hyper_attn_causal_masking.png" width="640">
+</p>
