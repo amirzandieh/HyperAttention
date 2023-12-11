@@ -10,6 +10,9 @@ class HyperAttention(torch.nn.Module):
 
     def __init__(self, input_dim=64, lsh_num_projs=8, block_size=256, sample_size=256, min_seq_len=2048,
                  smooth_block=False, **kwargs):
+        """
+        - block_size and sample_size must be divisible by 128
+        """
         super().__init__()
         self.input_dim = input_dim
         self.lsh_num_projs = lsh_num_projs
@@ -25,12 +28,13 @@ class HyperAttention(torch.nn.Module):
         Forward function for HyperAttention. If no causal masking, simply invokes forward_no_causal_mask method.
         If there is causal masking, it partitions the attention matrix and recurses on the partitions.
         inputs:
-            - query, key, and valu: must have same sequence lengths but dimension of values can be different from
-            that of query or key
+            - query, key, and valu: must have same sequence lengths but dimension of values vectors can be different
+            from that of query or key
+            - sequence lengths must be divisible by block_size
         output:
             - attn: (approximation of) the final attention output tensor
             - lse: (approximation of) log sum exp of the qk matrix
-    """
+        """
         query = query.contiguous()
         key = key.contiguous()
         value = value.contiguous()
@@ -97,7 +101,9 @@ class HyperAttention(torch.nn.Module):
             return attn, lse
 
     def forward_no_causal_mask(self, query, key, value, scale):
-
+        """
+            - sequence lengths must be divisible by block_size
+        """
         batch_size, head_size, n_query, dim = query.shape
 
         if self.min_seq_len > n_query:
