@@ -2,9 +2,6 @@
 Implementation of HyperAttention in Triton.
 Tested with triton==2.1.0.
 
-We use the FlashAttention implementation from Phil Tillet a starting point.
-https://github.com/openai/triton/blob/master/python/tutorials/06-fused-attention.py
-
 Requirements:
 - This implementation does not support attention bias (additive mask to qk).
 - This implementation only supports sequence lengths that are integer powers of two.
